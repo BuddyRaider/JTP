@@ -13,6 +13,15 @@ class JTP2 {
 
 	run(port=443, call=() => {}) {
 		this.server.on("request", (req, res) => {
+			if (req.url === "/jtp2c.js") {
+				try {
+					res.writeHead(200, {"Content-Type": "text/javascript"});
+					res.end(fs.readFileSync("./jtp2c.js"));
+				} catch {
+					res.writeHead(404, {"Content-Type": "text/plain"});
+					res.end("404 Error: Script Not Found!");
+				}
+			}
 			//console.log(req.headers);
 			if (req.method === "OPTIONS") {
 				res.writeHead(200, { "Access-Control-Allow-Origin": "*" });
