@@ -1,5 +1,6 @@
 const https = require("https");
 const http = require("http");
+const fs = require("fs");
 
 class JTP2 {
 	constructor(useHttps=false) {
@@ -15,9 +16,12 @@ class JTP2 {
 		this.server.on("request", (req, res) => {
 			if (req.url === "/jtp2c.js") {
 				try {
+					let file = fs.readFileSync("./jtp2c.js");
+					//console.log(file);
 					res.writeHead(200, {"Content-Type": "text/javascript"});
-					res.end(fs.readFileSync("./jtp2c.js"));
-				} catch {
+					res.end(file);
+				} catch (err) {
+					//console.error(err);
 					res.writeHead(404, {"Content-Type": "text/plain"});
 					res.end("404 Error: Script Not Found!");
 				}
