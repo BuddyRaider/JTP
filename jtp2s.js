@@ -6,39 +6,46 @@ class JTP2 {
 	constructor(useHttps=false) {
 		this.server = (useHttps) ? https.createServer():http.createServer();
 		this.evts = {};
+		this.urls = {};
 	}
 
 	on(evt, call) {
 		this.evts[evt] = call;
 	}
 
+	onURL(url, file) {
+		this.urls[url] = file;
+	}
+
 	run(port=443, call=() => {}) {
 		this.server.on("request", (req, res) => {
-			if (req.url === "/jtp2c.js") {
-				try {
-					let file = fs.readFileSync("./jtp2c.js");
-					//console.log(file);
-					res.writeHead(200, {"Content-Type": "text/javascript"});
-					res.end(file);
-				} catch (err) {
-					//console.error(err);
-					res.writeHead(404, {"Content-Type": "text/plain"});
-					res.end("404 Error: Script Not Found!");
+			for (let url in this.urls) {
+				if (req.url === url) {
+					try {
+						let file = fs.readFileSync(this.urls[url]);
+						//console.log(file);
+						res.writeHead(200, {"Content-Type": "text/javascript"});
+						res.end(file);
+					} catch (err) {
+						//console.error(err);
+						res.writeHead(404, {"Content-Type": "text/plain"});
+						res.end("404 Error: Script Not Found!");
+					}
+					return;
 				}
 			}
-			//console.log(req.headers);
 			if (req.method === "OPTIONS") {
 				res.writeHead(200, { "Access-Control-Allow-Origin": "*" });
 				res.end();
-			}
-			try {
-				res.setHeader("Access-Control-Allow-Headers", req.headers.origin);
-				res.setHeader("Conetent-Type", "text/plain");
-			} catch {
-				res.end();
 				return;
 			}
-			console.log(res.headers);
+			/*try {
+				res.setHeader("Access-Control-Allow-Headers", req.headers.origin);
+				res.setHeader("Content-Type", "text/plain");
+			} catch {
+				res.end("error");
+				return;
+			}*/
 			if (req.headers["jtp-evt"] !== undefined) {
 				this.evts[req.headers["jtp-evt"]](req, res);
 				try {
@@ -47,8 +54,13 @@ class JTP2 {
 				} catch {
 					return;
 				}
+			} else {
+				try {
+					res.end("Error 404: Could Not Find Requested Source!");
+				} catch {
+					return;
+				}
 			}
-			res.end("Error 404: Could Not Find Requested Source!");
 		});
 		this.server.listen({port: port}, call)
 	}
